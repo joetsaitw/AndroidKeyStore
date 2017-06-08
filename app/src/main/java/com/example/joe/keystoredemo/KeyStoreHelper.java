@@ -1,11 +1,11 @@
 package com.example.joe.keystoredemo;
 
+import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
-import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import android.util.Log;
 
@@ -71,7 +71,7 @@ public class KeyStoreHelper {
     }
 
 
-    @RequiresApi(api = Build.VERSION_CODES.M)
+    @TargetApi(Build.VERSION_CODES.M)
     private void generateRSAKey_AboveApi23() throws Exception {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator
                 .getInstance(KeyProperties.KEY_ALGORITHM_RSA, KEYSTORE_PROVIDER);
