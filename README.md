@@ -1,5 +1,5 @@
 # KeyStoreDemo
-A sample that uses [Android KeyStore System](https://developer.android.com/training/articles/keystore.html) to encrypt/decrypt string.
+A sample that uses [Android KeyStore System](https://developer.android.com/training/articles/keystore.html) to encrypt/decrypt string then save to [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences.html).
 
 
 ## Tutorial
