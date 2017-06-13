@@ -2,6 +2,13 @@
 A sample that uses [Android KeyStore System](https://developer.android.com/training/articles/keystore.html) to encrypt/decrypt string then save to [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences.html).
 
 
+## Result
+You should see something like this:
+
+<img src="https://github.com/joetsaitw/KeyStoreDemo/blob/master/screenshot/screenshot.jpg" width="320">
+
+
+
 ## Tutorial
 For more informations, please visit my blog.
 
