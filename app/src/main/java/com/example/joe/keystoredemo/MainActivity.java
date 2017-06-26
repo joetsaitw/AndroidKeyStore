@@ -1,7 +1,5 @@
 package com.example.joe.keystoredemo;
 
-import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -15,27 +13,24 @@ public class MainActivity extends AppCompatActivity {
 
     EditText editTextInput;
 
-
     TextView textEncrypt;
     TextView textDecrypt;
-
 
     Button buttonEncrypt;
     Button buttonDecrypt;
     Button buttonSave;
 
     KeyStoreHelper keyStoreHelper;
-    SharedPreferences sharedPreferences;
-
-    private final String PREF_KEY_INPUT = "PREF_KEY_INPUT";
+    SharedPreferencesHelper preferencesHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        keyStoreHelper = new KeyStoreHelper(getApplicationContext());
-        sharedPreferences = getPreferences(Context.MODE_PRIVATE);
+        preferencesHelper = new SharedPreferencesHelper(getApplicationContext());
+        keyStoreHelper = new KeyStoreHelper(getApplicationContext(), preferencesHelper);
+
 
         initView();
         initEditTextInput();
@@ -44,7 +39,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void initEditTextInput() {
-        String encryptedText = getString(PREF_KEY_INPUT);
+        String encryptedText = preferencesHelper.getInput();
         String plainInput = keyStoreHelper.decrypt(encryptedText);
         editTextInput.setText(plainInput);
     }
@@ -69,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
         buttonSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                putString(PREF_KEY_INPUT, textEncrypt.getText().toString());
+                preferencesHelper.setInput(textEncrypt.getText().toString());
                 Toast.makeText(getApplicationContext(), "Successfully saved!", Toast.LENGTH_SHORT).show();
             }
         });
@@ -83,16 +78,5 @@ public class MainActivity extends AppCompatActivity {
         buttonEncrypt = (Button) findViewById(R.id.button_encrypt);
         buttonDecrypt = (Button) findViewById(R.id.button_decrypt);
         buttonSave = (Button) findViewById(R.id.button_save);
-    }
-
-
-    private String getString(String key) {
-        return sharedPreferences.getString(key, "");
-    }
-
-    private void putString(String key, String value) {
-        sharedPreferences.edit()
-                .putString(key, value)
-                .apply();
     }
 }

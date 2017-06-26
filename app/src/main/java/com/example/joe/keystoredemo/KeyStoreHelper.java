@@ -1,56 +1,58 @@
 package com.example.joe.keystoredemo;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.os.Build;
 import android.security.KeyPairGeneratorSpec;
 import android.security.keystore.KeyGenParameterSpec;
 import android.security.keystore.KeyProperties;
+import android.support.annotation.RequiresApi;
 import android.util.Base64;
 import android.util.Log;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.math.BigInteger;
 import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
-import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
 import java.security.NoSuchProviderException;
 import java.security.PrivateKey;
 import java.security.PublicKey;
-import java.security.UnrecoverableEntryException;
-import java.util.ArrayList;
+import java.security.SecureRandom;
 import java.util.Calendar;
 
 import javax.crypto.Cipher;
-import javax.crypto.CipherInputStream;
-import javax.crypto.CipherOutputStream;
-import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import javax.security.auth.x500.X500Principal;
 
+/**
+ * Created by Joe on 2017/5/24.
+ */
 
 public class KeyStoreHelper {
 
     private static final String TAG = "KEYSTORE";
 
     private static final String KEYSTORE_PROVIDER = "AndroidKeyStore";
+    private static final String AES_MODE = "AES/GCM/NoPadding";
     private static final String RSA_MODE = "RSA/ECB/PKCS1Padding";
 
     private static final String KEYSTORE_ALIAS = "KEYSTORE_DEMO";
 
-    private KeyStore keyStore;
 
-    public KeyStoreHelper(Context context) {
+    private KeyStore keyStore;
+    private SharedPreferencesHelper prefsHelper;
+
+    public KeyStoreHelper(Context context, SharedPreferencesHelper sharedPreferencesHelper) {
         try {
+            prefsHelper = sharedPreferencesHelper;
             keyStore = KeyStore.getInstance(KEYSTORE_PROVIDER);
             keyStore.load(null);
 
             if (!keyStore.containsAlias(KEYSTORE_ALIAS)) {
-                generateKey(context);
+                prefsHelper.setIV("");
+                genKeyStoreKey(context);
+                genAESKey();
             }
 
         } catch (Exception e) {
@@ -60,18 +62,16 @@ public class KeyStoreHelper {
     }
 
 
-    private void generateKey(Context context) throws Exception {
-
+    private void genKeyStoreKey(Context context) throws Exception {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
             generateRSAKey_AboveApi23();
-
         } else {
             generateRSAKey_BelowApi23(context);
         }
     }
 
 
-    @TargetApi(Build.VERSION_CODES.M)
+    @RequiresApi(api = Build.VERSION_CODES.M)
     private void generateRSAKey_AboveApi23() throws Exception {
         KeyPairGenerator keyPairGenerator = KeyPairGenerator
                 .getInstance(KeyProperties.KEY_ALGORITHM_RSA, KEYSTORE_PROVIDER);
@@ -91,7 +91,7 @@ public class KeyStoreHelper {
     private void generateRSAKey_BelowApi23(Context context) throws NoSuchAlgorithmException, NoSuchProviderException, InvalidAlgorithmParameterException {
         Calendar start = Calendar.getInstance();
         Calendar end = Calendar.getInstance();
-        end.add(Calendar.YEAR, 100);
+        end.add(Calendar.YEAR, 30);
 
         KeyPairGeneratorSpec spec = new KeyPairGeneratorSpec.Builder(context)
                 .setAlias(KEYSTORE_ALIAS)
@@ -108,31 +108,19 @@ public class KeyStoreHelper {
         keyPairGenerator.generateKeyPair();
     }
 
-
     public String encrypt(String plainText) {
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                return encryptRSA_AboveApi23(plainText);
-
-            } else {
-                return encryptRSA_BelowApi23(plainText);
-            }
+            return encryptAES(plainText);
 
         } catch (Exception e) {
             Log.d(TAG, Log.getStackTraceString(e));
             return "";
         }
     }
-
     public String decrypt(String encryptedText) {
-
         try {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                return decryptRSA_AboveApi23(encryptedText);
+            return decryptAES(encryptedText);
 
-            } else {
-                return decryptRSA_BelowApi23(encryptedText);
-            }
         } catch (Exception e) {
             Log.d(TAG, Log.getStackTraceString(e));
             return "";
@@ -141,83 +129,91 @@ public class KeyStoreHelper {
     }
 
 
-    private String encryptRSA_AboveApi23(String plainText) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, NoSuchPaddingException, InvalidKeyException, IOException {
+    private String encryptRSA(byte[] plainText) throws Exception {
         PublicKey publicKey = keyStore.getCertificate(KEYSTORE_ALIAS).getPublicKey();
 
         Cipher cipher = Cipher.getInstance(RSA_MODE);
         cipher.init(Cipher.ENCRYPT_MODE, publicKey);
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        CipherOutputStream cipherOutputStream = new CipherOutputStream(outputStream, cipher);
-        cipherOutputStream.write(plainText.getBytes());
-        cipherOutputStream.close();
-
-        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT);
+        byte[] encryptedByte = cipher.doFinal(plainText);
+        return Base64.encodeToString(encryptedByte, Base64.DEFAULT);
     }
 
 
-    private String decryptRSA_AboveApi23(String encryptedText) throws Exception {
+    private byte[] decryptRSA(String encryptedText) throws Exception {
         PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEYSTORE_ALIAS, null);
 
         Cipher cipher = Cipher.getInstance(RSA_MODE);
         cipher.init(Cipher.DECRYPT_MODE, privateKey);
 
-        byte[] decodedBytes = Base64.decode(encryptedText, Base64.DEFAULT);
+        byte[] encryptedBytes = Base64.decode(encryptedText, Base64.DEFAULT);
+        byte[] decryptedBytes = cipher.doFinal(encryptedBytes);
+
+        return decryptedBytes;
+    }
+
+    private void genAESKey() throws Exception {
+        // Generate AES-Key
+        byte[] aesKey = new byte[16];
+        SecureRandom secureRandom = new SecureRandom();
+        secureRandom.nextBytes(aesKey);
 
 
-        CipherInputStream cipherInputStream = new CipherInputStream(
-                new ByteArrayInputStream(decodedBytes), cipher);
-        ArrayList<Byte> values = new ArrayList<>();
-        int nextByte;
-        while ((nextByte = cipherInputStream.read()) != -1) {
-            values.add((byte) nextByte);
-        }
+        // Generate 12 bytes iv then save to SharedPrefs
+        byte[] generated = secureRandom.generateSeed(12);
+        String iv = Base64.encodeToString(generated, Base64.DEFAULT);
+        prefsHelper.setIV(iv);
 
-        byte[] bytes = new byte[values.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = values.get(i).byteValue();
-        }
 
-        return new String(bytes);
+        // Encrypt AES-Key with RSA Public Key then save to SharedPrefs
+        String encryptAESKey = encryptRSA(aesKey);
+        prefsHelper.setAESKey(encryptAESKey);
     }
 
 
-    private String encryptRSA_BelowApi23(String plainText) throws NoSuchAlgorithmException, UnrecoverableEntryException, KeyStoreException, NoSuchPaddingException, InvalidKeyException, IOException {
-        PublicKey publicKey = keyStore.getCertificate(KEYSTORE_ALIAS).getPublicKey();
+    /**
+     * AES Encryption
+     * @param plainText: A string which needs to be encrypted.
+     * @return A base64's string after encrypting.
+     */
+    private String encryptAES(String plainText) throws Exception {
+        Cipher cipher = Cipher.getInstance(AES_MODE);
+        cipher.init(Cipher.ENCRYPT_MODE, getAESKey(), new IvParameterSpec(getIV()));
 
-        Cipher cipher = Cipher.getInstance(RSA_MODE);
-        cipher.init(Cipher.ENCRYPT_MODE, publicKey);
+        // 加密過後的byte
+        byte[] encryptedBytes = cipher.doFinal(plainText.getBytes());
 
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-        CipherOutputStream cipherOutputStream = new CipherOutputStream(outputStream, cipher);
-        cipherOutputStream.write(plainText.getBytes("UTF-8"));
-        cipherOutputStream.close();
-
-        return Base64.encodeToString(outputStream.toByteArray(), Base64.DEFAULT);
+        // 將byte轉為base64的string編碼
+        return Base64.encodeToString(encryptedBytes, Base64.DEFAULT);
     }
 
-    private String decryptRSA_BelowApi23(String encryptedText) throws Exception {
-        PrivateKey privateKey = (PrivateKey) keyStore.getKey(KEYSTORE_ALIAS, null);
 
-        Cipher cipher = Cipher.getInstance(RSA_MODE);
-        cipher.init(Cipher.DECRYPT_MODE, privateKey);
-
+    private String decryptAES(String encryptedText) throws Exception {
+        // 將加密過後的Base64編碼格式 解碼成 byte
         byte[] decodedBytes = Base64.decode(encryptedText.getBytes(), Base64.DEFAULT);
 
-        CipherInputStream cipherInputStream = new CipherInputStream(
-                new ByteArrayInputStream(decodedBytes), cipher);
-        ArrayList<Byte> values = new ArrayList<>();
-        int nextByte;
-        while ((nextByte = cipherInputStream.read()) != -1) {
-            values.add((byte) nextByte);
-        }
+        // 將解碼過後的byte 使用AES解密
+        Cipher cipher = Cipher.getInstance(AES_MODE);
+        cipher.init(Cipher.DECRYPT_MODE, getAESKey(), new IvParameterSpec(getIV()));
 
-        byte[] bytes = new byte[values.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = values.get(i).byteValue();
-        }
-
-        return new String(bytes);
+        return new String(cipher.doFinal(decodedBytes));
     }
+
+
+    private byte[] getIV() {
+        String prefIV = prefsHelper.getIV();
+        return Base64.decode(prefIV, Base64.DEFAULT);
+    }
+
+
+
+    private SecretKeySpec getAESKey() throws Exception {
+        String encryptedKey = prefsHelper.getAESKey();
+        byte[] aesKey = decryptRSA(encryptedKey);
+
+        return new SecretKeySpec(aesKey, AES_MODE);
+    }
+
+
 
 }
