@@ -5,7 +5,7 @@ A sample that uses [Android KeyStore System](https://developer.android.com/train
 ## Result
 You should see something like this:
 
-<img src="https://github.com/joetsaitw/KeyStoreDemo/blob/master/screenshot/screenshot.jpg" width="320">
+<img src="https://github.com/joetsaitw/KeyStoreDemo/blob/master/screenshot/Screenshot.png" width="320">
 
 
 
