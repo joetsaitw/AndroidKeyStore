@@ -1,4 +1,4 @@
-package com.example.joe.keystoredemo;
+package com.joe.androidkeystore;
 
 import android.content.Context;
 import android.support.test.InstrumentationRegistry;
@@ -21,6 +21,6 @@ public class ExampleInstrumentedTest {
         // Context of the app under test.
         Context appContext = InstrumentationRegistry.getTargetContext();
 
-        assertEquals("com.example.joe.keystoredemo", appContext.getPackageName());
+        assertEquals("com.joe.keystoredemo", appContext.getPackageName());
     }
 }

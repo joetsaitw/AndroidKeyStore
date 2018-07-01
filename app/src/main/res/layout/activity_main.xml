@@ -6,7 +6,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp"
-    tools:context="com.example.joe.keystoredemo.MainActivity">
+    tools:context="com.joe.androidkeystore.MainActivity">
 
 
     <TextView
