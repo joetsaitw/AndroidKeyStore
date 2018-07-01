@@ -8,7 +8,6 @@
 <img src="https://github.com/joetsaitw/KeyStoreDemo/blob/master/screenshot/Screenshot.png" width="320">
 
 
-
 ## 教學
 更詳細部分，請至我的部落格觀看教學文章：
 
