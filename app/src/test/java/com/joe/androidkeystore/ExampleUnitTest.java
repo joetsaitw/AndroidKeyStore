@@ -1,4 +1,4 @@
-package com.example.joe.keystoredemo;
+package com.joe.androidkeystore;
 
 import org.junit.Test;
 

@@ -1,4 +1,4 @@
-package com.example.joe.keystoredemo;
+package com.joe.androidkeystore;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
