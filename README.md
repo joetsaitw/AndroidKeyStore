@@ -1,4 +1,6 @@
 # AndroidKeyStore
+[EncryptedSharedPreferences](https://developer.android.com/reference/androidx/security/crypto/EncryptedSharedPreferences) 終於在 2021 年 6 月推出正式版，建議可以直接使用 EncryptedSharedPreferences。
+
 一個小範例展示如何使用 [Android KeyStore System](https://developer.android.com/training/articles/keystore.html) 來加／解密字串，並存入
 [SharedPreferences](https://developer.android.com/reference/android/content/SharedPreferences.html).
 
